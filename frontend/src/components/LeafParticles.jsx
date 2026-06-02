@@ -4,7 +4,7 @@ import React, { useEffect, useRef } from 'react';
  * Spore Particle Engine.
  * Renders a lightweight, high-performance canvas particle simulation.
  * Recommences spore scatter in Phase IV (progress 75% - 100%).
- * Integrates dynamic telemetry multipliers (solar and mycelium).
+ * Integrates dynamic telemetry multipliers (solar and mycelium) tuned for the biophilic Sylvan theme.
  */
 export default function LeafParticles({ progress, solar = 1.0, mycelium = 1.0 }) {
   const canvasRef = useRef(null);
@@ -66,20 +66,19 @@ export default function LeafParticles({ progress, solar = 1.0, mycelium = 1.0 })
         activeParticles.forEach((p) => {
           // Physics updates (speedY scales with mycelium biological activity)
           p.y += p.speedY * (0.5 + 0.5 * mycelium);
-          // Side-to-side sway using sine wave
           p.x += Math.sin(time * p.swaySpeed + p.swayOffset) * p.swayAmplitude;
           
-          // Draw spore
+          // Draw spore (warm translucent earth taupe)
           ctx.beginPath();
           ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-          ctx.fillStyle = `rgba(142, 168, 155, ${p.opacity * intensity})`; // Sage color
+          ctx.fillStyle = `rgba(109, 91, 70, ${p.opacity * intensity})`; 
           ctx.fill();
           
-          // Glowing green core for larger spores (opacity scales with solar input)
+          // Glowing amber core for larger spores (opacity scales with solar input)
           if (p.size > 1.8) {
             ctx.beginPath();
-            ctx.arc(p.x, p.y, p.size * 0.4, 0, Math.PI * 2);
-            ctx.fillStyle = `rgba(16, 185, 129, ${p.opacity * intensity * 1.5 * (0.6 + 0.4 * solar)})`; // Active Emerald core
+            ctx.arc(p.x, p.y, p.size * 0.45, 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(227, 160, 8, ${p.opacity * intensity * 1.5 * (0.6 + 0.4 * solar)})`; // Active Amber core
             ctx.fill();
           }
           

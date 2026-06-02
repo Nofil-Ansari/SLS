@@ -2,11 +2,11 @@ import React, { useState, useEffect, useRef } from 'react';
 
 /**
  * Immersive Procedural Tree Visualizer (ThreeCanvas).
- * Renders an organic, scroll-bound 3D-feeling tree using recursive SVG vector mathematics.
- * Incorporates physics-based spring smoothing, growth phases, and perpetual micro-motion wind sway.
- * Dynamically reacts to active sliders (solar, water, mycelium) in real-time.
+ * Renders an organic, scroll-bound tree using recursive SVG vector mathematics.
+ * Incorporates physics-based spring smoothing, growth phases, and wind sways.
+ * Staggered biophilic color profiles responsive to Solar, Water, Mycelium, Rain, and Sun-rays inputs.
  */
-export default function ThreeCanvas({ progress, solar = 1.0, water = 1.0, mycelium = 1.0 }) {
+export default function ThreeCanvas({ progress, solar = 1.0, water = 1.0, mycelium = 1.0, sunGlow = false, raining = false }) {
   const [time, setTime] = useState(0);
   const requestRef = useRef(null);
   
@@ -199,7 +199,7 @@ export default function ThreeCanvas({ progress, solar = 1.0, water = 1.0, myceli
     let lines = [];
     let leaves = [];
 
-    // Add current branch line
+    // Add branch line (styled in biophilic dark earthy clay)
     lines.push(
       <line
         key={`b-${depth}-${parentX}-${parentY}`}
@@ -208,7 +208,7 @@ export default function ThreeCanvas({ progress, solar = 1.0, water = 1.0, myceli
         x2={endX}
         y2={endY}
         strokeWidth={currentThickness}
-        className="stroke-[#50685C] opacity-85 transition-all duration-75"
+        className="stroke-[#2B352E] dark-override:stroke-[#8EA89B] opacity-90 transition-all duration-75"
         strokeLinecap="round"
       />
     );
@@ -220,28 +220,34 @@ export default function ThreeCanvas({ progress, solar = 1.0, water = 1.0, myceli
       const leafProgress = Math.max(0, Math.min(1, (progress - leafStart) * 12));
       
       if (leafProgress > 0) {
-        // Leaf size reacts dynamically to solar energy
-        const leafSize = 9 * leafProgress * (0.6 + 0.4 * solar);
+        // Leaf size reacts dynamically to solar and shimmers under sunGlow
+        let leafSize = 9 * leafProgress * (0.6 + 0.4 * solar);
+        if (sunGlow) leafSize *= 1.15;
+
         const leafWindSway = Math.sin(time * 3 + parentX) * 3;
+        
+        // Dynamic glistening rain pulse effect
+        const glistenOpacity = raining ? 0.7 + Math.sin(time * 6 + parentX) * 0.25 : 0.9;
         
         leaves.push(
           <g key={`l-${parentX}-${parentY}`} transform={`translate(${endX}, ${endY}) rotate(${currentAngle + leafWindSway})`}>
             {/* Soft backdrop glow around foliage */}
             <circle
               r={leafSize * 1.5}
-              fill="rgba(16, 185, 129, 0.08)"
+              fill={sunGlow ? "rgba(227, 160, 8, 0.12)" : "rgba(6, 27, 14, 0.06)"}
               className="blur-sm pointer-events-none"
             />
             {/* Dynamic organic leaf structure */}
             <path
               d={`M 0 0 C ${leafSize * 0.8} -${leafSize * 0.5}, ${leafSize * 1.2} -${leafSize}, 0 -${leafSize * 2.2} C -${leafSize * 1.2} -${leafSize}, -${leafSize * 0.8} -${leafSize * 0.5}, 0 0 Z`}
-              fill="url(#leafGradient)"
-              className="opacity-90 transform origin-bottom transition-all duration-300"
+              fill={sunGlow ? "url(#sunleafGradient)" : "url(#leafGradient)"}
+              className="transform origin-bottom transition-all duration-300"
+              style={{ opacity: glistenOpacity }}
             />
             {/* Active emerald core */}
             <path
               d={`M 0 0 L 0 -${leafSize * 2.0}`}
-              stroke="#A7F3D0"
+              stroke={sunGlow ? "#FDE047" : "#A7F3D0"}
               strokeWidth="0.5"
               className="opacity-70"
             />
@@ -265,52 +271,50 @@ export default function ThreeCanvas({ progress, solar = 1.0, water = 1.0, myceli
   // Run recursive generation from the base of the trunk
   const { lines, leaves } = renderBranches(skeleton, 250, 450, 0, 0);
 
-  // Background grid cells matching "whisper" border design system
+  // Background grid cells matching structural biophilic architecture
   const gridCells = [];
   for (let i = 1; i < 5; i++) {
     gridCells.push(
-      <line key={`grid-h-${i}`} x1="0" y1={i * 100} x2="500" y2={i * 100} stroke="rgba(142, 168, 155, 0.04)" strokeWidth="1" />
+      <line key={`grid-h-${i}`} x1="0" y1={i * 100} x2="500" y2={i * 100} stroke="rgba(109, 91, 70, 0.06)" strokeWidth="0.8" />
     );
     gridCells.push(
-      <line key={`grid-v-${i}`} x1={i * 100} y1="0" x2={i * 100} y2="500" stroke="rgba(142, 168, 155, 0.04)" strokeWidth="1" />
+      <line key={`grid-v-${i}`} x1={i * 100} y1="0" x2={i * 100} y2="500" stroke="rgba(109, 91, 70, 0.06)" strokeWidth="0.8" />
     );
   }
 
   // Calculate soil germination stage (Phase I: 0% - 20%) incorporating mycelium parameter
   const soilDepth = Math.max(0, Math.min(1, progress * 5));
-  const soilOpacity = (0.2 + 0.8 * soilDepth) * (0.6 + 0.4 * mycelium);
+  const soilOpacity = (0.25 + 0.75 * soilDepth) * (0.6 + 0.4 * mycelium);
 
   return (
     <div className="w-full h-full relative flex items-center justify-center select-none overflow-hidden animate-sway">
-      {/* Immersive backdrop atmosphere glow */}
-      <div className="absolute inset-0 bg-radial-glow opacity-30 pointer-events-none" />
-      
       <svg
         viewBox="0 0 500 500"
-        className="w-[95%] h-[95%] max-w-[500px] aspect-square drop-shadow-[0_24px_60px_rgba(5,22,12,0.45)]"
+        className="w-[92%] h-[92%] max-w-[500px] aspect-square drop-shadow-[0_24px_50px_rgba(109,91,70,0.15)] dark-override:drop-shadow-[0_24px_50px_rgba(5,22,12,0.45)] transition-all duration-1000"
       >
         <defs>
-          {/* Chlorophyll-calibrated emerald leaf gradient (shifts stop opacity dynamically with solar energy) */}
+          {/* Biophilic Sylvan Leaf Gradient (Parchment profile) */}
           <linearGradient id="leafGradient" x1="0%" y1="100%" x2="0%" y2="0%">
-            <stop offset="0%" stopColor="#065F46" />
-            <stop offset={`${Math.min(95, 45 + 20 * solar)}%`} stopColor="#10B981" />
-            <stop offset="100%" stopColor="#34D399" stopOpacity={0.5 + 0.5 * solar} />
+            <stop offset="0%" stopColor="#0C1B03" /> {/* accent-moss */}
+            <stop offset={`${Math.min(95, 45 + 20 * solar)}%`} stopColor="#061b0e" /> {/* accent-forest */}
+            <stop offset="100%" stopColor="#93a681" stopOpacity={0.6 + 0.4 * solar} />
           </linearGradient>
-          
-          {/* Subtle trunk lighting gradient */}
-          <linearGradient id="trunkGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="#1C2E24" />
-            <stop offset="100%" stopColor="#2D483A" />
+
+          {/* Shimmering Sunlight Leaf Gradient */}
+          <linearGradient id="sunleafGradient" x1="0%" y1="100%" x2="0%" y2="0%">
+            <stop offset="0%" stopColor="#061b0e" />
+            <stop offset="60%" stopColor="#e3a008" /> {/* accent-sunlight */}
+            <stop offset="100%" stopColor="#FCD34D" />
           </linearGradient>
           
           <radialGradient id="soilGlow" cx="50%" cy="100%" r="50%">
-            <stop offset="0%" stopColor="rgba(16, 185, 129, 0.15)" />
-            <stop offset="100%" stopColor="rgba(12, 17, 14, 0)" />
+            <stop offset="0%" stopColor="rgba(6, 27, 14, 0.12)" />
+            <stop offset="100%" stopColor="rgba(251, 249, 246, 0)" />
           </radialGradient>
         </defs>
 
         {/* System Grid (Structural architecture) */}
-        <g className="opacity-80">{gridCells}</g>
+        <g className="opacity-90">{gridCells}</g>
 
         {/* Soil Base / Roots Layer (Phase I) */}
         <g opacity={soilOpacity}>
@@ -318,18 +322,19 @@ export default function ThreeCanvas({ progress, solar = 1.0, water = 1.0, myceli
           <path
             d="M 170 450 Q 250 458 330 450"
             fill="none"
-            stroke="#121A15"
-            strokeWidth="3"
+            stroke="#6d5b46"
+            strokeWidth="2.5"
             strokeLinecap="round"
+            className="opacity-40"
           />
           {/* Sprout roots emerging under soil */}
           {progress > 0.05 && (
             <path
               d={`M 250 450 Q 235 465 220 472 M 250 450 Q 260 462 275 476`}
               fill="none"
-              stroke="#304439"
+              stroke="#6d5b46"
               strokeWidth={Math.min(2.5, progress * 15) * (0.7 + 0.3 * mycelium)}
-              className="opacity-75 transition-all duration-75"
+              className="opacity-80 transition-all duration-75"
               strokeLinecap="round"
             />
           )}
@@ -338,9 +343,9 @@ export default function ThreeCanvas({ progress, solar = 1.0, water = 1.0, myceli
             <path
               d="M 235 465 Q 220 480 205 483 M 260 462 Q 280 480 295 488"
               fill="none"
-              stroke="#10B981"
+              stroke="#061b0e"
               strokeWidth="0.8"
-              className="opacity-40 animate-pulse"
+              className="opacity-50 animate-pulse"
               strokeLinecap="round"
             />
           )}
